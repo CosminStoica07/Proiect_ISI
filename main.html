@@ -17,7 +17,7 @@
             text-decoration: underline;
         }
     </style>
-    <link rel="stylesheet" href="https://js.arcgis.com/4.17/esri/themes/light/main.css">
+    <link rel="stylesheet" href="https://js.arcgis.com/4.18/esri/themes/light/main.css">
 
     <script>
         var dojoConfig = {
@@ -31,7 +31,7 @@
         };
     </script>
 
-    <script src="https://js.arcgis.com/4.17/"></script>
+    <script src="https://js.arcgis.com/4.18/"></script>
 
     <script>
         require([/*
@@ -57,10 +57,15 @@
             "esri/layers/CSVLayer",
             "esri/Color",
             "esri/symbols/SimpleMarkerSymbol",
-            "esri/renderers/SimpleRenderer"
+            "esri/symbols/SimpleFillSymbol",
+            "esri/renderers/SimpleRenderer",
+            "esri/tasks/RouteTask",
+            "esri/tasks/support/RouteParameters",
+            "esri/tasks/support/FeatureSet",
+            "esri/widgets/Directions"
         ], function (/*intl, */Portal, OAuthInfo, identityManager, domStyle, domAttr, on, dom,
                      geolocate, Map, MapView, Locate, Track, Graphic, MapImageLayer, Circle, SceneView, Point, Polygon,
-                     CSVLayer, Color, SimpleMarkerSymbol, SimpleRenderer) {
+                     CSVLayer, Color, SimpleMarkerSymbol, SimpleRenderer, SimpleFillSymbol, RouteTask, RouteParameters, FeatureSet, Directions) {
 
             var portalUrl = "https://www.arcgis.com/sharing";
 
@@ -258,6 +263,7 @@
                 }, 1500);
             }
 
+
             function displayMap() {
                 var portal = new Portal();
 
@@ -269,11 +275,10 @@
                     csv.renderer = {
                         type: "simple",  // autocasts as new SimpleRenderer()
                         symbol: {
-                            type: "simple-marker",  // autocasts as new SimpleMarkerSymbol()
-                            size: 6,
-                            color: "black",
+                            type: "simple-marker",  // autocasts as new SimpleFillSymbol()
+                            color: [ 255, 128, 10, 0.5 ],
                             outline: {  // autocasts as new SimpleLineSymbol()
-                                width: 0.5,
+                                width: 1,
                                 color: "white"
                             }
                         }
@@ -316,6 +321,105 @@
                             return view.goTo(options.target);
                         }
                     });
+
+                    var routeTask = new RouteTask({
+                        url: "https://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World"
+                    });
+
+                    view.on("click", function(event){
+                        if (view.graphics.length === 0) {
+                            addGraphic("start", event.mapPoint);
+                        } else if (view.graphics.length === 1) {
+                            addGraphic("finish", event.mapPoint);
+                            // Call the route service
+                            getRoute();
+                        } else {
+                            view.graphics.removeAll();
+                            addGraphic("start",event.mapPoint);
+                        }
+                    });
+
+                    function addGraphic(type, point) {
+                        var graphic = new Graphic({
+                            symbol: {
+                                type: "simple-marker",
+                                color: (type === "start") ? "white" : "black",
+                                size: "8px"
+                            },
+                            geometry: point
+                        });
+                        view.graphics.add(graphic);
+                    }
+                    function getRoute() {
+                        // Setup the route parameters
+                        var routeParams = new RouteParameters({
+                            stops: new FeatureSet({
+                                features: view.graphics.toArray() // Pass the array of graphics
+                            }),
+                            returnDirections: true
+                        });
+                        // Get the route
+                        routeTask.solve(routeParams).then(function (data) {
+                            // Display the route
+                            data.routeResults.forEach(function (result) {
+                                result.route.symbol = {
+                                    type: "simple-line",
+                                    color: [5, 150, 255],
+                                    width: 3
+                                };
+                                view.graphics.add(result.route);
+                            });
+
+                            //*** ADD ***//
+
+                            // Display the directions
+                            var directions = document.createElement("ol");
+                            directions.classList = "esri-widget esri-widget--panel esri-directions__scroller";
+                            directions.style.marginTop = 0;
+                            directions.style.paddingTop = "15px";
+
+                            // Show the directions
+                            var features = data.routeResults[0].directions.features;
+                            features.forEach(function (result, i) {
+                                var direction = document.createElement("li");
+                                direction.innerHTML =
+                                    result.attributes.text + " (" + result.attributes.length.toFixed(2) + " miles)";
+                                directions.appendChild(direction);
+                            });
+
+                            // Add directions to the view
+                            view.ui.empty("top-right");
+                            view.ui.add(directions, "top-right");
+                        });
+                    }
+
+                    var directions = new Directions({
+                        view: view
+                    });
+
+                    view.ui.add(directions, "top-right");
+
+                    function createStopSymbol(color, size) {
+                        return new SimpleMarkerSymbol({
+                            style: "simple-marker",
+                            size: size,
+                            outline: {
+                                width: "2px",
+                                color: "white"
+                            },
+                            color: color
+                        });
+                    }
+
+                    // Stop symbols
+                    directions.stopSymbols.first = createStopSymbol("green", "14px");
+                    directions.stopSymbols.middle = createStopSymbol("black", "10px");
+                    directions.stopSymbols.last = createStopSymbol("red", "14px");
+
+                    // Route symbol
+                    directions.routeSymbol.width = "2";
+                    directions.routeSymbol.color = [0, 0, 0, 0.75];
+                    directions.routeSymbol.style = "short-dot";
                     view.ui.add(track, "top-left");
 
 
@@ -358,8 +462,8 @@
                     var longitude_p = 24.8798695;
 
                     // Bucuresti (wrong coordinates)
-                    var latitude_b = 44.44676580000001;
-                    var longitude_b = 26.0009209;
+                    var latitude_b = 44.42675468599465;
+                    var longitude_b = 26.104023893642307;
 
                     /*TODO alert(calcCrow(latitude_p, longitude_p, latitude_b, longitude_b));*/
 
