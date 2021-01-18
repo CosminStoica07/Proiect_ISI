@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    <link rel="stylesheet" href="https://js.arcgis.com/3.35/esri/css/esri.css">
+    <style>
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #FFF;
+            overflow: hidden;
+            font-family: "Trebuchet MS";
+        }
+    </style>
+    <script src="https://js.arcgis.com/3.35/"></script>
+    <script>
+        var map, csv;
+        require([
+            "esri/map",
+            "esri/layers/CSVLayer",
+            "esri/Color",
+            "esri/symbols/SimpleMarkerSymbol",
+            "esri/renderers/SimpleRenderer",
+        ], function(
+            Map, CSVLayer, Color, SimpleMarkerSymbol, SimpleRenderer, InfoTemplate
+        ) {
+            map = new Map("map", {
+                basemap: "topo-vector",
+                center: [26.104023893642307, 44.42675468599465],
+                zoom: 13
+            });
+            csv = new CSVLayer("date.csv");
+            csv.setRenderer(new SimpleRenderer(new SimpleMarkerSymbol("solid", 15, null, new Color([238, 69, 0, 0.5]))));
+            map.addLayer(csv);
+        });
+    </script>
+</head>
+
+<body>
+<div id="map"></div>
+</body>
+</html>
