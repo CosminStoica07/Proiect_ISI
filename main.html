@@ -53,14 +53,19 @@
             "esri/geometry/Circle",
             "esri/views/SceneView",
             "esri/geometry/Point",
-            "esri/geometry/Polygon"
+            "esri/geometry/Polygon",
+            "esri/layers/CSVLayer",
+            "esri/Color",
+            "esri/symbols/SimpleMarkerSymbol",
+            "esri/renderers/SimpleRenderer"
         ], function (/*intl, */Portal, OAuthInfo, identityManager, domStyle, domAttr, on, dom,
-                     geolocate, Map, MapView, Locate, Track, Graphic, MapImageLayer, Circle, SceneView, Point, Polygon) {
+                     geolocate, Map, MapView, Locate, Track, Graphic, MapImageLayer, Circle, SceneView, Point, Polygon,
+                     CSVLayer, Color, SimpleMarkerSymbol, SimpleRenderer) {
 
             var portalUrl = "https://www.arcgis.com/sharing";
 
             var info = new OAuthInfo({
-                appId: "koRRijqbOKPqMsaP", //*** TODO: Your Client ID value goes here ***//
+                appId: "koRRijqbOKPqMsaP", //*** Client ID value goes here ***//
                 popup: false // inline redirects don't require any additional app configuration
             });
 
@@ -260,6 +265,21 @@
                 portal.load().then(function () {
                     dom.byId("viewDiv").style.display = "flex";
 
+                    var csv = new CSVLayer("date.csv");
+                    csv.renderer = {
+                        type: "simple",  // autocasts as new SimpleRenderer()
+                        symbol: {
+                            type: "simple-marker",  // autocasts as new SimpleMarkerSymbol()
+                            size: 6,
+                            color: "black",
+                            outline: {  // autocasts as new SimpleLineSymbol()
+                                width: 0.5,
+                                color: "white"
+                            }
+                        }
+                    };
+
+
                     // TODO stubGeolocation();
 
                     var map = new Map({
@@ -331,6 +351,7 @@
                     });
 
                     map.add(traffic);
+                    map.add(csv);
 
                     // Pitesti
                     var latitude_p = 44.842849;
@@ -339,7 +360,9 @@
                     // Bucuresti (wrong coordinates)
                     var latitude_b = 44.44676580000001;
                     var longitude_b = 26.0009209;
-                    
+
+                    /*TODO alert(calcCrow(latitude_p, longitude_p, latitude_b, longitude_b));*/
+
                     drawCircle(view, latitude_b, longitude_b);
                 });
             }
@@ -535,6 +558,39 @@
                 view.graphics.add(circleGraphic_3);
                 view.graphics.add(circleGraphic_4);
             }
+
+            /**
+             * Function used to calculate the distance "as the crow flies" (straight line) from (lat1, long1) to
+             * (lat2, long2)
+             * @param lat1
+             * @param lon1
+             * @param lat2
+             * @param lon2
+             * @returns {number} the distance in km
+             */
+            function calcDistance(lat1, lon1, lat2, lon2) {
+                var R = 6371; // km
+                var dLat = toRad(lat2-lat1);
+                var dLon = toRad(lon2-lon1);
+                var lat1_rad = toRad(lat1);
+                var lat2_rad = toRad(lat2);
+
+                var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1_rad) * Math.cos(lat2_rad);
+                var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+                return R * c;
+            }
+
+            /**
+             * Function used to convert numeric degrees to radians
+             * @param Value to be converted
+             * @returns {number} the converted value in radians
+             */
+            function toRad(Value) {
+                return Value * Math.PI / 180;
+            }
+
         });
 
     </script>
