@@ -62,10 +62,18 @@
             "esri/tasks/RouteTask",
             "esri/tasks/support/RouteParameters",
             "esri/tasks/support/FeatureSet",
-            "esri/widgets/Directions"
+            "esri/widgets/Directions",
+            "esri/tasks/Locator"
         ], function (/*intl, */Portal, OAuthInfo, identityManager, domStyle, domAttr, on, dom,
                      geolocate, Map, MapView, Locate, Track, Graphic, MapImageLayer, Circle, SceneView, Point, Polygon,
-                     CSVLayer, Color, SimpleMarkerSymbol, SimpleRenderer, SimpleFillSymbol, RouteTask, RouteParameters, FeatureSet, Directions) {
+                     CSVLayer, Color, SimpleMarkerSymbol, SimpleRenderer, SimpleFillSymbol, RouteTask, RouteParameters, FeatureSet, Directions, Locator) {
+
+
+            // Set up a locator task using the world geocoding service
+            var locatorTask = new Locator({
+                url:
+                    "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer"
+            });
 
             var portalUrl = "https://www.arcgis.com/sharing";
 
@@ -420,7 +428,35 @@
                     directions.routeSymbol.width = "2";
                     directions.routeSymbol.color = [0, 0, 0, 0.75];
                     directions.routeSymbol.style = "short-dot";
+
                     view.ui.add(track, "top-left");
+
+                    view.popup.autoOpenEnabled = false;
+                    view.on("click", function (event) {
+
+                        view.popup.open({
+                            // Set the popup's title to the coordinates of the location
+                            title: "Ghicitoarea ta este: O girafa iti va indica calea",
+                            location: event.mapPoint // Set the location of the popup to the clicked location
+                        });
+
+                        var params = {
+                            location: event.mapPoint
+                        };
+
+                        // Display the popup
+                        // Execute a reverse geocode using the clicked location
+                        locatorTask
+                            .locationToAddress(params)
+                            .then(function (response) {
+                                // If an address is successfully found, show it in the popup's content
+                                view.popup.content = response.address;
+                            })
+                            .catch(function (error) {
+                                // If the promise fails and no result is found, show a generic message
+                                view.popup.content = "No address was found for this location";
+                            });
+                    });
 
 
                     view.when(function () {
