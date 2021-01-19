@@ -66,7 +66,8 @@
             "esri/tasks/Locator"
         ], function (/*intl, */Portal, OAuthInfo, identityManager, domStyle, domAttr, on, dom,
                      geolocate, Map, MapView, Locate, Track, Graphic, MapImageLayer, Circle, SceneView, Point, Polygon,
-                     CSVLayer, Color, SimpleMarkerSymbol, SimpleRenderer, SimpleFillSymbol, RouteTask, RouteParameters, FeatureSet, Directions, Locator) {
+                     CSVLayer, Color, SimpleMarkerSymbol, SimpleRenderer, SimpleFillSymbol, RouteTask, RouteParameters,
+                     FeatureSet, Directions, Locator) {
 
 
             // Set up a locator task using the world geocoding service
@@ -280,6 +281,15 @@
                     dom.byId("viewDiv").style.display = "flex";
 
                     var csv = new CSVLayer("date.csv");
+                    csv.when(function(){
+                       console.log(csv.getField(csv.latitudeField).toJSON());
+                        /*TODO featureLayer.set({
+                            fields: csv.fields,
+                            objectIdField: "ObjectID"
+                        });*/
+                    });
+                    //console.log(field);
+
                     csv.renderer = {
                         type: "simple",  // autocasts as new SimpleRenderer()
                         symbol: {
@@ -291,6 +301,8 @@
                             }
                         }
                     };
+
+
 
 
                     // TODO stubGeolocation();
@@ -341,7 +353,7 @@
 
                     function createStopSymbol(color, size) {
                         return new SimpleMarkerSymbol({
-                            style: "simple-marker",
+                            style: "circle",
                             size: size,
                             outline: {
                                 width: "2px",
@@ -425,6 +437,10 @@
                     map.add(traffic);
                     map.add(csv);
 
+                    /*var long_fields = csv.getField('longitude');
+                    var lat_fields = csv.getField('latitude');
+                    alert(long_fields);*/
+
                     // Pitesti
                     var latitude_p = 44.842849;
                     var longitude_p = 24.8798695;
@@ -435,7 +451,7 @@
 
                     /*TODO alert(calcCrow(latitude_p, longitude_p, latitude_b, longitude_b));*/
 
-                    drawCircle(view, latitude_b, longitude_b);
+                    //drawCircle(view, latitude_b, longitude_b);
                 });
             }
 
