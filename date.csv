@@ -1,12 +1,12 @@
 Title,Description,Longitude,Latitude
 Gradina Botanica,https://ro.wikipedia.org/wiki/Gr%C4%83dina_Botanic%C4%83_din_Bucure%C8%99ti,26.0662892034347,44.4367875562157
 Palatul Parlamentului,https://ro.wikipedia.org/wiki/Palatul_Parlamentului,26.08728622698437,44.427809973431046
-Ateneul Roman,-,26.096346362355103,44.44509377371144
-Arcul de Triumf,-,26.077463610717633,44.47376408905791
-Muzeul Grigore Antipa,-,26.084501727314713,44.45410070961575
-Casa Ceausescu,-,26.09256981203704,44.47045669442872
+Ateneul Roman,https://ro.wikipedia.org/wiki/Ateneul_Rom%C3%A2n,26.096346362355103,44.44509377371144
+Arcul de Triumf,https://ro.wikipedia.org/wiki/Arcul_de_Triumf_din_Bucure%C8%99ti,26.077463610717633,44.47376408905791
+Muzeul Grigore Antipa,https://ro.wikipedia.org/wiki/Muzeul_Na%C8%9Bional_de_Istorie_Natural%C4%83_%E2%80%9EGrigore_Antipa%E2%80%9D,26.084501727314713,44.45410070961575
+Casa Ceausescu,https://casaceausescu.ro/?page_id=2941&lang=ro,26.09256981203704,44.47045669442872
 Oraselul Copiilor,-,26.10862015100736,44.40169397381708
-Biserica Manastirii Stavropoleos,-,26.09894274079316,44.43213237752685
-Muzeul National de Arta,-,26.09585283598015,44.43951735503823
-Parcul National Vacaresti,-,26.134669765003185,44.40417745810561
-Catedrala,-,26.248904932853588,47.64706046605036
+Biserica Manastirii Stavropoleos,https://ro.wikipedia.org/wiki/Biserica_Stavropoleos,26.09894274079316,44.43213237752685
+Muzeul National de Arta,https://ro.wikipedia.org/wiki/Muzeul_Na%C8%9Bional_de_Art%C4%83_al_Rom%C3%A2niei,26.09585283598015,44.43951735503823
+Parcul National Vacaresti,https://ro.wikipedia.org/wiki/Parcul_Natural_V%C4%83c%C4%83re%C8%99ti,26.134669765003185,44.40417745810561
+Catedrala Mantuirii Neamului,https://ro.wikipedia.org/wiki/Catedrala_M%C3%A2ntuirii_Neamului,26.248904932853588,47.64706046605036
