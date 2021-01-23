@@ -16,6 +16,15 @@
             cursor: pointer;
             text-decoration: underline;
         }
+        #titleDiv {
+            padding: 10px;
+        }
+
+        #titleText {
+            font-size: 20pt;
+            font-weight: bold;
+            padding-bottom: 10px;
+        }
     </style>
     <link rel="stylesheet" href="https://js.arcgis.com/4.18/esri/themes/light/main.css">
 
@@ -30,6 +39,7 @@
             ]
         };
     </script>
+
 
     <script src="https://js.arcgis.com/4.18/"></script>
 
@@ -63,11 +73,12 @@
             "esri/tasks/support/RouteParameters",
             "esri/tasks/support/FeatureSet",
             "esri/widgets/Directions",
-            "esri/tasks/Locator"
+            "esri/tasks/Locator",
+            "esri/layers/FeatureLayer"
         ], function (/*intl, */Portal, OAuthInfo, identityManager, domStyle, domAttr, on, dom,
                      geolocate, Map, MapView, Locate, Track, Graphic, MapImageLayer, Circle, SceneView, Point, Polygon,
                      CSVLayer, Color, SimpleMarkerSymbol, SimpleRenderer, SimpleFillSymbol, RouteTask, RouteParameters,
-                     FeatureSet, Directions, Locator) {
+                     FeatureSet, Directions, Locator, FeatureLayer) {
 
 
             // Set up a locator task using the world geocoding service
@@ -88,6 +99,7 @@
             // send users to arcgis.com to login
             on(dom.byId("sign-in"), "click", function() {
                 identityManager.getCredential(portalUrl);
+
             });
 
             // log out and reload
@@ -119,7 +131,7 @@
                     event.stopPropagation();
                 }
 
-                // exlude the zoom widget from the default UI
+                // exclude the zoom widget from the default UI
                 view.ui.components = ["attribution"];
 
                 // disable mouse wheel scroll zooming on the view
@@ -275,6 +287,12 @@
 
             function displayMap() {
                 var portal = new Portal();
+                var check_point = 1;
+                var riddles = ["O girafă îți va indica calea","secondBook","thirdBook"];
+                document.getElementById("myText").innerHTML = "Ghicitoarea numărul " + check_point;
+                document.getElementById("myRiddle").innerHTML = ":" + riddles[check_point - 1];
+
+
 
                 // Once the portal has loaded, the user is signed in
                 portal.load().then(function () {
@@ -288,12 +306,15 @@
                             objectIdField: "ObjectID"
                         });*/
                     });
+                    csv.popupTemplate = {
+                        "title": "{Title}",
+                        "content": "{Description}"
+                    };
                     //console.log(field);
-
                     csv.renderer = {
                         type: "simple",  // autocasts as new SimpleRenderer()
                         symbol: {
-                            type: "simple-marker",  // autocasts as new SimpleFillSymbol()
+                            type: "simple-marker",  // autocasts as new SimpleMarker()
                             color: [ 255, 128, 10, 0.5 ],
                             outline: {  // autocasts as new SimpleLineSymbol()
                                 width: 1,
@@ -301,9 +322,6 @@
                             }
                         }
                     };
-
-
-
 
                     // TODO stubGeolocation();
 
@@ -343,13 +361,13 @@
                     });
 
                     view.ui.add(track, "top-left");
+                    view.ui.add("titleDiv", "top-right");
 
                     //widget de calculare ruta
                     var directions = new Directions({
                         view: view
                     });
-
-                    view.ui.add(directions, "top-right");
+                    //directions.search.goToOverride
 
                     function createStopSymbol(color, size) {
                         return new SimpleMarkerSymbol({
@@ -374,14 +392,21 @@
                     directions.routeSymbol.style = "short-dot";
 
 
+                    var measureThisAction = {
+                        title: "Mă dau bătut",
+                        id: "measure-this",
+                        image: "idea.png"
+                    };
+
                     //pop-up cu ghicitoare
-                    view.popup.autoOpenEnabled = false;
+                    view.popup.autoOpenEnabled = true;
                     view.on("click", function (event) {
 
                         view.popup.open({
                             // Set the popup's title to the coordinates of the location
                             title: "Ghicitoarea ta este: O girafa iti va indica calea",
-                            location: event.mapPoint // Set the location of the popup to the clicked location
+                            location: event.mapPoint, // Set the location of the popup to the clicked location
+                            actions: [measureThisAction]
                         });
 
                         var params = {
@@ -394,12 +419,44 @@
                             .locationToAddress(params)
                             .then(function (response) {
                                 // If an address is successfully found, show it in the popup's content
-                                view.popup.content = response.address;
+                                view.popup.content = "Locația mea: " + response.address;
+                                view.ui.remove(directions, "top-right");
+                                if (check_point == 2) {
+                                    view.popup.title = "Ghicitoarea ta este: asta";
+                                }
                             })
                             .catch(function (error) {
                                 // If the promise fails and no result is found, show a generic message
                                 view.popup.content = "No address was found for this location";
                             });
+                    });
+
+                    var button = document.querySelector('button');
+                    button.onclick = function measureThis() {
+
+                        view.ui.add(directions, "top-right");
+                        check_point += 1;
+                        if (check_point > 5) {
+                            document.getElementById("myText").innerHTML = "";
+                            document.getElementById("myRiddle").innerHTML = "Felicitări! Ai parcurs tot traseul.";
+                        }
+                        else {
+                            document.getElementById("myText").innerHTML = "Ghicitoarea numărul " + check_point;
+                            document.getElementById("myRiddle").innerHTML = ":" + riddles[check_point - 1];
+                        }
+                        console.log(check_point);
+                        //view.popup.selectedFeature.attributes.name; //+
+                        //"<div style='background-color:DarkGray;color:white'>" +
+                        //distance +
+                        //" miles.</div>";
+                    }
+
+                    // Event handler that fires each time an action is clicked.
+                    view.popup.on("trigger-action", function (event) {
+                        // Execute the measureThis() function if the measure-this action is clicked
+                        if (event.action.id === "measure-this") {
+                            measureThis();
+                        }
                     });
 
 
@@ -436,10 +493,6 @@
 
                     map.add(traffic);
                     map.add(csv);
-
-                    /*var long_fields = csv.getField('longitude');
-                    var lat_fields = csv.getField('latitude');
-                    alert(long_fields);*/
 
                     // Pitesti
                     var latitude_p = 44.842849;
@@ -694,5 +747,10 @@
 </div>
 <!-- for the map -->
 <div id="viewDiv" style="display: none;"></div>
+<div id="titleDiv" class="esri-widget">
+    <div id="titleText">Treasure hunt</div>
+    <div><span id="myText"></span><span id="myRiddle"></span></div>
+    <button onclick="measureThis()"><img src="idea.png" width="18px" height="18px">   Mă dau bătut</button>
+</div>
 </body>
 </html>
