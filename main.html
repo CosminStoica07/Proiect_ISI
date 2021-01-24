@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
     <meta charSet="utf-8">
@@ -35,9 +36,31 @@
             transform: translateX(-50%);
         }
 
+        #filter {
+            height: 160px;
+            width: 200%;
+            visibility: hidden;
+        }
+
+        .obiectiv-item {
+            width: 100%;
+            padding: 12px;
+            text-align: center;
+            vertical-align: baseline;
+            cursor: pointer;
+            height: 40px;
+        }
+
+        .obiectiv-item:focus {
+            background-color: dimgrey;
+        }
+
+        .obiectiv-item:hover {
+            background-color: dimgrey;
+        }
+
     </style>
     <link rel="stylesheet" href="https://js.arcgis.com/4.18/esri/themes/light/main.css">
-
     <script>
         var dojoConfig = {
             packages: [
@@ -49,11 +72,163 @@
             ]
         };
     </script>
-
-
-    <script src="https://js.arcgis.com/4.18/"></script>
-
+    <script src="https://js.arcgis.com/4.18/" ></script>
     <script>
+        var http = new XMLHttpRequest();
+        http.open('HEAD', 'small.csv', false);
+        http.send();
+
+        if(http.status == 404){
+            var c;
+            var blob = null;
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "date.csv");
+            xhr.responseType = "blob";
+            xhr.onload = function()
+            {
+                blob = xhr.response;
+                var fr = new FileReader();
+                fr.readAsText(blob);
+                fr.onload = function(){
+                    c = fr.result;
+
+                    var textByLine = c.split("\n")
+                    var antet = textByLine[0] + '\n';
+                    textByLine.shift()
+                    const n = textByLine.length
+
+                    var arr = [];
+                    while(arr.length < 5){
+                        var r = Math.floor(Math.random() * n);
+                        if(arr.indexOf(r) === -1) arr.push(r);
+                    }
+
+                    for(var i = 0; i < 5; i++) {
+                        antet += textByLine[arr[i]] + '\n';
+                    }
+                    var file = new Blob([antet], {type: 'plain/text'});
+                    if (window.navigator.msSaveOrOpenBlob) // IE10+
+                        window.navigator.msSaveOrOpenBlob(file, 'small.csv');
+                    else { // Others
+                        var a = document.createElement("a"),
+                            url = URL.createObjectURL(file);
+                        a.href = url;
+                        a.download = 'small.csv';
+                        setTimeout(() => {  document.body.appendChild(a);
+                            a.click();
+                            setTimeout(function() {
+                                document.body.removeChild(a);
+                                window.URL.revokeObjectURL(url);
+                            }, 0);}, 2000);
+                    }
+                }
+            }
+            xhr.send();
+        }
+    </script>
+    <script >
+
+        var riddles = [];
+        var indexes = [];
+        var coordinates = [];
+        var lat = [];
+        var lng = [];
+        var traseu = [];
+        var information = [];
+        var check_point = 1;
+        var coords = [
+                {
+                    //centru Bucuresti
+                    lat: 44.42551820774172,
+                    lng: 26.104573202649387
+                },
+                {
+                    //ateneu
+                    lat: 44.441495905720664,
+                    lng: 26.09773908861615
+                },
+                {
+                    //muzeul de arta
+                    lat: 44.43944627540996,
+                    lng: 26.096078646711653
+                },
+                {
+                    //palatul parlamentului
+                    lat: 44.42800451179271,
+                    lng: 26.088911784140485
+                },
+                {
+                    //gradina Botanica
+                    lat: 44.4392509376365,
+                    lng: 26.06354881546379
+                },
+
+                {
+                    //parcul vacaresti
+                    lat: 44.40772020182917,
+                    lng: 26.122493055233257
+                },
+                {
+                    //arcul de triumf
+                    lat: 44.467356545619076,
+                    lng: 26.078920569784255
+                },
+                {
+                    //muzeul antipa
+                    lat: 44.452945946212374,
+                    lng: 26.085295510033383
+                },
+                {
+                    //biserica stavropoleos
+                    lat: 44.4318295043351,
+                    lng: 26.099597048625743
+                },
+                {
+                    //casa ceausescu
+                    lat: 44.468842953321634,
+                    lng: 26.09280694812848
+                },
+                {
+                    //spitalul coltea
+                    lat: 44.43434052095434,
+                    lng: 26.102774036949736
+                }
+            ],
+            currentIndex = 0;
+        var activateStubGeoLocation = 0;
+        var http = new XMLHttpRequest();
+        http.open('HEAD', 'small.csv', false);
+        http.send();
+
+        if(http.status != 404) {
+            var c;
+            var blob = null;
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "small.csv");
+            xhr.responseType = "blob";
+            xhr.onload = function () {
+                blob = xhr.response;
+                var fr = new FileReader();
+                fr.readAsText(blob);
+                fr.onload = function () {
+                    c = fr.result;
+
+                    var textByLine = c.split("\n")
+                    for (var i = 1; i < textByLine.length - 1; i++) {
+                        var tokens = textByLine[i].split(",");
+                        riddles.push(tokens[4]);
+                        indexes.push(tokens[5]);
+                        coordinates.push(tokens[2] + "," + tokens[3]);
+                        lng.push(tokens[2]);
+                        lat.push(tokens[3]);
+                        traseu.push(tokens[0]);
+                        information.push(tokens[1]);
+                    }
+                }
+            }
+            xhr.send();
+        }
+
         require([/*
             "esri/intl",*/
             "esri/portal/Portal",
@@ -84,11 +259,12 @@
             "esri/tasks/support/FeatureSet",
             "esri/widgets/Directions",
             "esri/tasks/Locator",
-            "esri/layers/FeatureLayer"
+            "esri/layers/FeatureLayer",
+            "esri/widgets/Expand"
         ], function (/*intl, */Portal, OAuthInfo, identityManager, domStyle, domAttr, on, dom,
                      geolocate, Map, MapView, Locate, Track, Graphic, MapImageLayer, Circle, SceneView, Point, Polygon,
                      CSVLayer, Color, SimpleMarkerSymbol, SimpleRenderer, SimpleFillSymbol, RouteTask, RouteParameters,
-                     FeatureSet, Directions, Locator, FeatureLayer) {
+                     FeatureSet, Directions, Locator, FeatureLayer, Expand) {
 
 
             // Set up a locator task using the world geocoding service
@@ -193,128 +369,61 @@
              * Function used to simulate the user movement for demo
              *
              **/
-            function stubGeolocation() {
-                var coords = [
-                        {
-                            lat: 34.05648363780692,
-                            lng: -117.19565501782613
-                        },
-                        {
-                            lng: -117.19565880345007,
-                            lat: 34.05682230352545
-                        },
-                        {
-                            lng: -117.19566258907402,
-                            lat: 34.05716096924398
-                        },
-                        {
-                            lng: -117.19566637469796,
-                            lat: 34.05749963496251
-                        },
-                        {
-                            lng: -117.19567016032191,
-                            lat: 34.05783830068104
-                        },
-                        {
-                            lng: -117.19567394594586,
-                            lat: 34.05817696639957
-                        },
-                        {
-                            lng: -117.1956777315698,
-                            lat: 34.0585156321181
-                        },
-                        {
-                            lng: -117.19568151719375,
-                            lat: 34.05885429783663
-                        },
-                        {
-                            lng: -117.1956853028177,
-                            lat: 34.05919296355516
-                        },
-                        {
-                            lat: 34.059192963555134,
-                            lng: -117.19568530281771
-                        },
-                        {
-                            lat: 34.05920092649827,
-                            lng: -117.19575894615099
-                        },
-                        {
-                            lng: -117.19575574232981,
-                            lat: 34.058861053180614
-                        },
-                        {
-                            lng: -117.19575253850863,
-                            lat: 34.05852117986296
-                        },
-                        {
-                            lng: -117.19574933468745,
-                            lat: 34.0581813065453
-                        },
-                        {
-                            lng: -117.19574613086627,
-                            lat: 34.057841433227644
-                        },
-                        {
-                            lng: -117.19574292704509,
-                            lat: 34.05750155990999
-                        },
-                        {
-                            lng: -117.19573972322391,
-                            lat: 34.05716168659233
-                        },
-                        {
-                            lng: -117.19573651940273,
-                            lat: 34.056821813274674
-                        },
-                        {
-                            lng: -117.19573331558155,
-                            lat: 34.05648193995702
-                        },
-                        {
-                            lat: 34.05648193995701,
-                            lng: -117.19573331558153
-                        },
-                        {
-                            lng: -117.19569416670383,
-                            lat: 34.056482788881965
-                        },
-                        {
-                            lng: -117.19565501782613,
-                            lat: 34.05648363780692
-                        }
-                    ],
-                    currentCoordIndex = 0;
-
+            function stubGeolocation(check_point) {
                 geolocate.use();
+                var id = setInterval(function () {
+                    geolocate.change(coords[currentIndex]);
+                    if (Math.abs(coords[currentIndex].lat - parseFloat(lat[check_point - 1])) < 0.007
+                        && Math.abs(coords[currentIndex].lng - parseFloat(lng[check_point - 1])) < 0.0015) {
+                        check_point++;
+                        if (check_point > 5) {
+                            document.getElementById("myText").innerHTML = "";
+                            var myTrip = "";
+                            for (var i = 0; i < traseu.length; i++)
+                                myTrip += (i + 1) + ". " + traseu[i] + "\n";
+                            document.getElementById("myRiddle").innerHTML = "Felicitări! Ai parcurs tot traseul:\n" + myTrip;
+                            document.getElementsByClassName("esri-icon esri-icon-pause")[0].click();
+                            var button1 = document.querySelectorAll('button')[0];
+                            if (button1.style.display != "none")
+                                button1.style.display = "none";
+                        }
+                        else {
+                            document.getElementById("myText").innerHTML = "Ai trecut de obiectivul nr. " + (check_point - 1) + "."
+                                + " (" + traseu[check_point - 2] + ")." + "\n" + " Informații: " + '<a href="' + information[check_point - 2] + '">' + traseu[check_point - 2] + '</a>';
+                            document.getElementById("myRiddle").innerHTML = "";
+                            var button2 = document.querySelectorAll('button')[1];
+                            button2.style.display = "block";
+                            var button1 = document.querySelectorAll('button')[0];
+                            button1.style.display = "none";
 
-                setInterval(function () {
-                    geolocate.change(coords[currentCoordIndex]);
-                    currentCoordIndex = (currentCoordIndex + 1) % coords.length;
-                }, 1500);
+                        }
+                        activateStubGeoLocation = 1;
+                        clearInterval(id);
+                    }
+                    currentIndex = (currentIndex + 1) % coords.length;
+                }, 3000);
+
             }
-
 
             function displayMap() {
                 var portal = new Portal();
-                var check_point = 1;
-                var riddles = ["O girafă îți va indica calea","secondBook","thirdBook"];
                 var myWidget = document.getElementById("titleDiv");
                 myWidget.style.display = "block";
                 var myImage = document.getElementById("myImg");
                 myImage.style.display = "none";
+                var button2 = document.querySelectorAll('button')[1];
+                button2.style.display = "none";
                 document.getElementById("myText").innerHTML = "Ghicitoarea numărul " + check_point;
                 document.getElementById("myRiddle").innerHTML = ": " + riddles[check_point - 1];
-
 
 
                 // Once the portal has loaded, the user is signed in
                 portal.load().then(function () {
                     dom.byId("viewDiv").style.display = "flex";
 
-                    var csv = new CSVLayer("date.csv");
+                    var csv = new CSVLayer("small.csv");
                     csv.when(function(){
-                       console.log(csv.getField(csv.latitudeField).toJSON());
+                       //console.log(csv.getField(csv.latitudeField).toJSON());
                         /*TODO featureLayer.set({
                             fields: csv.fields,
                             objectIdField: "ObjectID"
@@ -322,9 +431,10 @@
                     });
                     csv.popupTemplate = {
                         "title": "{Title}",
-                        "content": "{Description}"
+                        "content": "{Description}",
+                        "image":"idea.png"
                     };
-                    //console.log(field);
+
                     csv.renderer = {
                         type: "simple",  // autocasts as new SimpleRenderer()
                         symbol: {
@@ -337,7 +447,13 @@
                         }
                     };
 
-                    // TODO stubGeolocation();
+                    stubGeolocation(check_point);
+                    var doc = document.getElementById("viewDiv");
+                    doc.addEventListener("keyup", function(event) {
+                        if (event.keyCode === 32) { //when press space activate stubGeolocation
+                            //stubGeolocation(check_point);
+                        }
+                    });
 
                     var map = new Map({
                         basemap: "streets-navigation-vector"/*,
@@ -381,7 +497,6 @@
                     var directions = new Directions({
                         view: view
                     });
-                    //directions.search.goToOverride
 
                     function createStopSymbol(color, size) {
                         return new SimpleMarkerSymbol({
@@ -405,74 +520,50 @@
                     directions.routeSymbol.color = [0, 0, 0, 0.75];
                     directions.routeSymbol.style = "short-dot";
 
-
-                    var measureThisAction = {
-                        title: "Mă dau bătut",
-                        id: "measure-this",
-                        image: "idea.png"
-                    };
-
-                    //pop-up cu ghicitoare
-                    view.popup.autoOpenEnabled = true;
-                    view.on("click", function (event) {
-
-                        view.popup.open({
-                            // Set the popup's title to the coordinates of the location
-                            location: event.mapPoint, // Set the location of the popup to the clicked location
-                            //actions: [measureThisAction]
-                        });
-
-                        var params = {
-                            location: event.mapPoint
-                        };
-
-                        // Display the popup
-                        // Execute a reverse geocode using the clicked location
-                        locatorTask
-                            .locationToAddress(params)
-                            .then(function (response) {
-                                // If an address is successfully found, show it in the popup's content
-                                view.popup.content = "Locația mea: " + response.address;
-                            })
-                            .catch(function (error) {
-                                // If the promise fails and no result is found, show a generic message
-                                view.popup.content = "No address was found for this location";
-                            });
-                    });
-
-                    var button = document.querySelector('button');
-                    button.onclick = function measureThis() {
+                    var button1 = document.querySelectorAll('button')[0];
+                    button1.onclick = function measureThis() {
 
                         view.ui.add(directions, "top-right");
-                        check_point += 1;
+                        document.getElementById("myText").innerHTML = "";
+                        document.getElementById("myRiddle").innerHTML = "Pentru a descoperi obiectivul misterios pune în căsuța destinație aceste coordonate: "
+                            + coordinates[check_point - 1];
+                        if (activateStubGeoLocation == 0)
+                            setTimeout(() => {
+                                document.getElementsByClassName("esri-menu__list esri-search__suggestions-list esri-search__suggestions-list--current-location")[0].children[0].click();
+                                }, 2000);
+                        else
+                            setTimeout(() => {
+                                document.getElementsByClassName("esri-input esri-search__input")[0].value = coords[currentIndex].lng + "," + coords[currentIndex].lat; }, 3000);
+                        setTimeout(() => {
+                            document.getElementsByClassName("esri-input esri-search__input")[1].value = ""; }, 3000);
+                        button1.style.display = "none";
+                        button2.style.display = "block";
+                    }
 
-                        setTimeout(() => {  document.getElementsByClassName("esri-input esri-search__input")[1].value = "26.0662892034347,44.4367875562157"; }, 2000);
+                    var button2 = document.querySelectorAll('button')[1];
+                    button2.onclick = function nextRiddle() {
+
+                        view.ui.remove(directions, "top-right");
+                        check_point += 1;
+                        button2.style.display = "none";
+                        button1.style.display = "block";
                         if (check_point > 5) {
                             document.getElementById("myText").innerHTML = "";
-                            document.getElementById("myRiddle").innerHTML = "Felicitări! Ai parcurs tot traseul.";
-                            if (button.style.display != "none")
-                                button.style.display = "none";
-                            view.ui.remove(directions);
+                            var myTrip = "";
+                            for (var i = 0; i < traseu.length; i++)
+                                myTrip += (i + 1) + ". " + traseu[i] + "\n";
+                            document.getElementById("myRiddle").innerHTML = "Felicitări! Ai parcurs tot traseul:\n" + myTrip;
+                            if (button1.style.display != "none")
+                                button1.style.display = "none";
+                            document.getElementsByClassName("esri-icon esri-icon-pause")[0].click();
+                            //map.center = [26.104023893642307, 44.42675468599465];
+                            //map.zoom = 13;
                         }
                         else {
                             document.getElementById("myText").innerHTML = "Ghicitoarea numărul " + check_point;
                             document.getElementById("myRiddle").innerHTML = ": " + riddles[check_point - 1];
                         }
-                        console.log(check_point);
-                        //view.popup.selectedFeature.attributes.name; //+
-                        //"<div style='background-color:DarkGray;color:white'>" +
-                        //distance +
-                        //" miles.</div>";
                     }
-
-                    // Event handler that fires each time an action is clicked.
-                    /*view.popup.on("trigger-action", function (event) {
-                        // Execute the measureThis() function if the measure-this action is clicked
-                        if (event.action.id === "measure-this") {
-                            measureThis();
-                        }
-                    });*/
-
 
                     view.when(function () {
                         var prevLocation = view.center;
@@ -495,7 +586,6 @@
 
                             prevLocation = location.clone();
                         });
-
                         track.start();
                     });
 
@@ -505,6 +595,32 @@
                         url: "https://traffic.arcgis.com/arcgis/rest/services/World/Traffic/MapServer"
                     });
 
+                    const categoriesElement = document.getElementById("filter");
+                    let selectedCategory;
+
+                    // click event handler for category choices
+                    categoriesElement.addEventListener("click", filterByCategory);
+                    function filterByCategory(event) {
+                        selectedCategory = event.target.getAttribute("category");
+                        console.log("Category = '" + selectedCategory + "'" + "+");
+                        if (selectedCategory != 'Toate')
+                            csv.definitionExpression = "Category = '" + selectedCategory + "'";
+                        else
+                            csv.definitionExpression = "Index >= '0'";
+                    }
+
+                    view.whenLayerView(csv).then(function (layerView) {
+                        // set up UI items
+                        categoriesElement.style.visibility = "visible";
+                        const categoryExpand = new Expand({
+                            view: view,
+                            content: categoriesElement,
+                            expandIconClass: "esri-icon-filter",
+                            group: "top-left"
+                        });
+                        view.ui.add(categoryExpand, "top-left");
+                    });
+
                     map.add(traffic);
                     map.add(csv);
 
@@ -512,9 +628,9 @@
                     var latitude_p = 44.842849;
                     var longitude_p = 24.8798695;
 
-                    // Bucuresti (wrong coordinates)
-                    var latitude_b = 44.42675468599465;
-                    var longitude_b = 26.104023893642307;
+                    // Bucuresti
+                    var latitude_b = 44.42551820774172;
+                    var longitude_b = 26.104573202649387
 
                     /*TODO alert(calcCrow(latitude_p, longitude_p, latitude_b, longitude_b));*/
 
@@ -763,11 +879,18 @@
     <span id="sign-out" class="action">Sign Out</span>
 </div>
 <!-- for the map -->
+<div id="filter" class="esri-widget">
+    <div class="obiectiv-item visible" category="Cultural">Obiectiv cultural</div>
+    <div class="obiectiv-item visible" category="Natural">Obiectiv natural</div>
+    <div class="obiectiv-item visible" category="Istoric">Obiectiv istoric</div>
+    <div class="obiectiv-item visible" category="Toate">Toate</div>
+</div>
 <div id="viewDiv" style="display: none;"></div>
 <div id="titleDiv" class="esri-widget">
     <div id="titleText">Treasure hunt</div>
     <div><span id="myText"></span><span id="myRiddle"></span></div>
-    <button onclick="measureThis()"><img src="idea.png" width="18px" height="18px">   Mă dau bătut</button>
+    <button id="btn1" onclick="measureThis()"><img src="idea.png" width="18px" height="18px">   Mă dau bătut</button>
+    <button id="btn2" onclick="nextRiddle()"><img src="question.png" width="18px" height="18px">   Următoarea ghicitoare</button>
 </div>
 </body>
 </html>
