@@ -18,6 +18,7 @@
         }
         #titleDiv {
             padding: 10px;
+            display: none;
         }
 
         #titleText {
@@ -25,6 +26,15 @@
             font-weight: bold;
             padding-bottom: 10px;
         }
+
+        #myImg {
+            margin: 0;
+            position: absolute;
+            left: 50%;
+            -ms-transform: translateX(-50%);
+            transform: translateX(-50%);
+        }
+
     </style>
     <link rel="stylesheet" href="https://js.arcgis.com/4.18/esri/themes/light/main.css">
 
@@ -289,8 +299,12 @@
                 var portal = new Portal();
                 var check_point = 1;
                 var riddles = ["O girafă îți va indica calea","secondBook","thirdBook"];
+                var myWidget = document.getElementById("titleDiv");
+                myWidget.style.display = "block";
+                var myImage = document.getElementById("myImg");
+                myImage.style.display = "none";
                 document.getElementById("myText").innerHTML = "Ghicitoarea numărul " + check_point;
-                document.getElementById("myRiddle").innerHTML = ":" + riddles[check_point - 1];
+                document.getElementById("myRiddle").innerHTML = ": " + riddles[check_point - 1];
 
 
 
@@ -404,9 +418,8 @@
 
                         view.popup.open({
                             // Set the popup's title to the coordinates of the location
-                            title: "Ghicitoarea ta este: O girafa iti va indica calea",
                             location: event.mapPoint, // Set the location of the popup to the clicked location
-                            actions: [measureThisAction]
+                            //actions: [measureThisAction]
                         });
 
                         var params = {
@@ -420,10 +433,6 @@
                             .then(function (response) {
                                 // If an address is successfully found, show it in the popup's content
                                 view.popup.content = "Locația mea: " + response.address;
-                                view.ui.remove(directions, "top-right");
-                                if (check_point == 2) {
-                                    view.popup.title = "Ghicitoarea ta este: asta";
-                                }
                             })
                             .catch(function (error) {
                                 // If the promise fails and no result is found, show a generic message
@@ -436,13 +445,18 @@
 
                         view.ui.add(directions, "top-right");
                         check_point += 1;
+
+                        setTimeout(() => {  document.getElementsByClassName("esri-input esri-search__input")[1].value = "26.0662892034347,44.4367875562157"; }, 2000);
                         if (check_point > 5) {
                             document.getElementById("myText").innerHTML = "";
                             document.getElementById("myRiddle").innerHTML = "Felicitări! Ai parcurs tot traseul.";
+                            if (button.style.display != "none")
+                                button.style.display = "none";
+                            view.ui.remove(directions);
                         }
                         else {
                             document.getElementById("myText").innerHTML = "Ghicitoarea numărul " + check_point;
-                            document.getElementById("myRiddle").innerHTML = ":" + riddles[check_point - 1];
+                            document.getElementById("myRiddle").innerHTML = ": " + riddles[check_point - 1];
                         }
                         console.log(check_point);
                         //view.popup.selectedFeature.attributes.name; //+
@@ -452,12 +466,12 @@
                     }
 
                     // Event handler that fires each time an action is clicked.
-                    view.popup.on("trigger-action", function (event) {
+                    /*view.popup.on("trigger-action", function (event) {
                         // Execute the measureThis() function if the measure-this action is clicked
                         if (event.action.id === "measure-this") {
                             measureThis();
                         }
-                    });
+                    });*/
 
 
                     view.when(function () {
@@ -737,8 +751,11 @@
     </script>
 </head>
 <body>
+<div>
 <div id="anonymousPanel" style="display: block; padding: 5px; text-align: center;">
     <span id="sign-in" class="action">Sign In</span> to IMPOSTORII.
+</div>
+<img id="myImg" src="treasurehunt.jpeg" width="1050px">
 </div>
 
 <div id="personalizedPanel" style="display: none; padding: 5px; text-align: center;">
