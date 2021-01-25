@@ -165,11 +165,10 @@
                     lat: 44.4392509376365,
                     lng: 26.06354881546379
                 },
-
                 {
                     //parcul vacaresti
-                    lat: 44.40772020182917,
-                    lng: 26.122493055233257
+                    lat: 44.40572020182917,
+                    lng: 26.133493055233257
                 },
                 {
                     //arcul de triumf
@@ -375,46 +374,7 @@
              *
              **/
             function stubGeolocation(check_point, view, track, widget) {
-                /*var coords = [
-                        {
-                            lat: 44.422,
-                            lng: 26.090
-                        },
-                        {
-                            lng: 26.090,
-                            lat: 44.423
-                        },
-                        {
-                            lng: 26.090,
-                            lat: 44.424
-                        },
-                        {
-                            lng: 26.090,
-                            lat: 44.425
-                        },
-                        {
-                            lng: 26.090,
-                            lat: 44.426
-                        },
-                        {
-                            lng: 26.089,
-                            lat: 44.426
-                        },
-                        {
-                            lng: 26.088,
-                            lat: 44.427
-                        },
-                        {
-                            lng: 26.087,
-                            lat: 44.427
-                        },
-                        {
-                            lng: 26.08728622698437,
-                            lat: 44.427809973431046
-                        }
-                    ],
-                    currentCoordIndex = 0;*/
-                    geolocate.use();
+                geolocate.use();
 
                 var id = setInterval(function () {
                     geolocate.change(coords[currentIndex]);
@@ -423,7 +383,7 @@
                         widget.innerHTML = "Time(minutes): " + currentTimes[currentIndex];
 
                     if (Math.abs(coords[currentIndex].lat - parseFloat(lat[check_point - 1])) < 0.007
-                        && Math.abs(coords[currentIndex].lng - parseFloat(lng[check_point - 1])) < 0.0015) {
+                        && Math.abs(coords[currentIndex].lng - parseFloat(lng[check_point - 1])) < 0.002) {
                         check_point++;
                         if (check_point > 5) {
                             document.getElementById("myText").innerHTML = "";
@@ -435,6 +395,10 @@
                             var button1 = document.querySelectorAll('button')[0];
                             if (button1.style.display != "none")
                                 button1.style.display = "none";
+                            track.goToOverride = function (view, options) {
+                                options.target.scale = 50000;  // Override the default map scale
+                                return view.goTo(options.target);
+                            };
                         }
                         else {
                             document.getElementById("myText").innerHTML = "Ai trecut de obiectivul nr. " + (check_point - 1) + "."
@@ -446,7 +410,7 @@
                             button1.style.display = "none";
 
                             track.goToOverride = function (view, options) {
-                                options.target.scale = 50000;  // Override the default map scale
+                                options.target.scale = 5000;  // Override the default map scale
                                 return view.goTo(options.target);
                             };
                         }
@@ -492,7 +456,7 @@
 
                     var csv = new CSVLayer("small.csv");
                     csv.when(function(){
-                       //console.log(csv.getField(csv.latitudeField).toJSON());
+                        //console.log(csv.getField(csv.latitudeField).toJSON());
                         /*TODO featureLayer.set({
                             fields: csv.fields,
                             objectIdField: "ObjectID"
@@ -500,8 +464,7 @@
                     });
                     csv.popupTemplate = {
                         "title": "{Title}",
-                        "content": "{Description}",
-                        "image":"idea.png"
+                        "content": "{Description}"
                     };
 
                     csv.renderer = {
@@ -518,12 +481,6 @@
 
                     csv.title = "Final point";
 
-                    var doc = document.getElementById("viewDiv");
-                    doc.addEventListener("keyup", function(event) {
-                        if (event.keyCode === 32) { //when press space activate stubGeolocation
-                            // stubGeolocation(check_point);
-                        }
-                    });
                     var map = new Map({
                         basemap: "streets-navigation-vector"/*,
                         layers: trafficLayer*/
@@ -563,6 +520,16 @@
                     coordsWidget.id = "timeWidget";
                     coordsWidget.className = "esri-widget esri-component";
                     coordsWidget.style.padding = "7px 15px 5px";
+
+                    csv.labelingInfo = {
+                        labelExpressionInfo: { "value": "{Title}"},
+                        symbol: {
+                            type: "text",  // autocasts as new TextSymbol()
+                            color: "black",
+                            haloSize: 1,
+                            haloColor: "white"
+                        }
+                    };
 
                     stubGeolocation(check_point, view, track, coordsWidget);
 
@@ -617,7 +584,7 @@
                         if (activateStubGeoLocation == 0)
                             setTimeout(() => {
                                 document.getElementsByClassName("esri-menu__list esri-search__suggestions-list esri-search__suggestions-list--current-location")[0].children[0].click();
-                                }, 2000);
+                            }, 2000);
                         else
                             setTimeout(() => {
                                 document.getElementsByClassName("esri-input esri-search__input")[0].value = coords[currentIndex].lng + "," + coords[currentIndex].lat; }, 3000);
@@ -643,12 +610,18 @@
                             if (button1.style.display != "none")
                                 button1.style.display = "none";
                             document.getElementsByClassName("esri-icon esri-icon-pause")[0].click();
-                            //map.center = [26.104023893642307, 44.42675468599465];
-                            //map.zoom = 13;
+                            track.goToOverride = function (view, options) {
+                                options.target.scale = 50000;  // Override the default map scale
+                                return view.goTo(options.target);
+                            };
                         }
                         else {
                             document.getElementById("myText").innerHTML = "Ghicitoarea numărul " + check_point;
                             document.getElementById("myRiddle").innerHTML = ": " + riddles[check_point - 1];
+                            track.goToOverride = function (view, options) {
+                                options.target.scale = 5000;  // Override the default map scale
+                                return view.goTo(options.target);
+                            };
                         }
                     }
 
@@ -693,9 +666,6 @@
                         selectedCategory = event.target.getAttribute("category");
                         xhr.open("GET", "small.csv");
                         xhr.responseType = "blob";
-
-                        //console.log(event.target.getAttribute("Longitude") + " " + event.target.getAttribute("Latitude"));
-                        console.log("Category = '" + selectedCategory + "'" + "+");
                         if (selectedCategory != 'Toate') {
                             csv.definitionExpression = "Category = '" + selectedCategory + "'";
                             xhr.onload = function () {
@@ -710,7 +680,7 @@
                                     for (var i = 1; i < textByLine.length - 1; i++) {
                                         var tokens = textByLine[i].split(",");
                                         let str = tokens[6];
-                                        str = str.substring(0, str.length - 1);
+                                        str = str.substring(0, str.length);
 
                                         if (str.localeCompare(selectedCategory) === 0) {
                                             drawCircle(view, parseFloat(tokens[3]), parseFloat(tokens[2]));
@@ -723,7 +693,7 @@
                             csv.definitionExpression = "Index >= '0'";
                             view.graphics.removeAll();
                             var i;
-                            for (i = 0; i < coords.length; i++) {
+                            for (i = 0; i < coordinates.length; i++) {
                                 drawCircle(view, parseFloat(lat[i]), parseFloat(lng[i]));
                             }
                         }
@@ -745,7 +715,7 @@
                     map.add(csv);
 
                     var i;
-                    for (i = 0; i < coords.length; i++) {
+                    for (i = 0; i < coordinates.length; i++) {
                         drawCircle(view, parseFloat(lat[i]), parseFloat(lng[i]));
                     }
                 });
@@ -816,15 +786,6 @@
                 var lat_3 = randomizeLatitude(latitude, random_offset_3);
                 var long_3 = randomizeLongitude(longitude, random_offset_3, latitude);
 
-                // console.log(lat_3 + " " + long_3);
-
-                // without randomize
-                /*var lat_1 = latitude;
-                var lat_2 = latitude;
-                var lat_3 = latitude;
-                var long_1 = longitude;
-                var long_2 = longitude;
-                var long_3 = longitude;*/
                 // create points for the circles
                 var point_1 = {
                     type: "point",
@@ -989,10 +950,10 @@
 </head>
 <body>
 <div>
-<div id="anonymousPanel" style="display: block; padding: 5px; text-align: center;">
-    <span id="sign-in" class="action">Sign In</span> to IMPOSTORII.
-</div>
-<img id="myImg" src="treasurehunt.jpeg" width="1050px">
+    <div id="anonymousPanel" style="display: block; padding: 5px; text-align: center;">
+        <span id="sign-in" class="action">Sign In</span> to IMPOSTORII.
+    </div>
+    <img id="myImg" src="treasurehunt.jpeg" width="1050px">
 </div>
 
 <div id="personalizedPanel" style="display: none; padding: 5px; text-align: center;">
