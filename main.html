@@ -370,8 +370,8 @@
              * Function used to simulate the user movement for demo
              *
              **/
-            function stubGeolocation(check_point) {
-                var coords = [
+            function stubGeolocation(check_point, view, track) {
+                /*var coords = [
                         {
                             lat: 44.422,
                             lng: 26.090
@@ -409,7 +409,7 @@
                             lat: 44.427809973431046
                         }
                     ],
-                    currentCoordIndex = 0;
+                    currentCoordIndex = 0;*/
                     geolocate.use();
 
                 var id = setInterval(function () {
@@ -437,11 +437,18 @@
                             var button1 = document.querySelectorAll('button')[0];
                             button1.style.display = "none";
 
+                            track.goToOverride = function (view, options) {
+                                options.target.scale = 50000;  // Override the default map scale
+                                return view.goTo(options.target);
+                            };
                         }
                         activateStubGeoLocation = 1;
                         clearInterval(id);
                     }
-                    currentIndex = (currentIndex + 1) % coords.length;
+                    if (currentIndex < coords.length)
+                        currentIndex++;
+
+                    //currentIndex = (currentIndex + 1) % coords.length;
                 }, 3000);
 
             }
@@ -490,14 +497,12 @@
 
                     csv.title = "Final point";
 
-                    stubGeolocation(check_point);
                     var doc = document.getElementById("viewDiv");
                     doc.addEventListener("keyup", function(event) {
                         if (event.keyCode === 32) { //when press space activate stubGeolocation
                             // stubGeolocation(check_point);
                         }
                     });
-
                     var map = new Map({
                         basemap: "streets-navigation-vector"/*,
                         layers: trafficLayer*/
@@ -533,6 +538,8 @@
                         }
                     });
 
+                    stubGeolocation(check_point, view, track);
+
                     const legend = new Expand({
                         content: new Legend({
                             view: view,
@@ -542,7 +549,7 @@
                         expanded: true
                     });
 
-                    view.ui.add(legend, "bottom-right");
+                    view.ui.add(legend, "bottom-left");
                     view.ui.add(track, "top-left");
                     view.ui.add("titleDiv", "top-right");
 
