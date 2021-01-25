@@ -260,11 +260,12 @@
             "esri/widgets/Directions",
             "esri/tasks/Locator",
             "esri/layers/FeatureLayer",
-            "esri/widgets/Expand"
+            "esri/widgets/Expand",
+            "esri/widgets/Legend"
         ], function (/*intl, */Portal, OAuthInfo, identityManager, domStyle, domAttr, on, dom,
                      geolocate, Map, MapView, Locate, Track, Graphic, MapImageLayer, Circle, SceneView, Point, Polygon,
                      CSVLayer, Color, SimpleMarkerSymbol, SimpleRenderer, SimpleFillSymbol, RouteTask, RouteParameters,
-                     FeatureSet, Directions, Locator, FeatureLayer, Expand) {
+                     FeatureSet, Directions, Locator, FeatureLayer, Expand, Legend) {
 
 
             // Set up a locator task using the world geocoding service
@@ -370,7 +371,35 @@
              *
              **/
             function stubGeolocation(check_point) {
-                geolocate.use();
+                var coords = [
+                        {
+                            lat: 44.422,
+                            lng: 26.090
+                        },
+                        {
+                            lng: 26.090,
+                            lat: 44.423
+                        },
+                        {
+                            lng: 26.090,
+                            lat: 44.424
+                        },
+                        {
+                            lng: 26.091,
+                            lat: 44.424
+                        },
+                        {
+                            lng: 26.092,
+                            lat: 44.425
+                        },
+                        {
+                            lng: 26.095,
+                            lat: 44.430
+                        }
+                    ],
+                    currentCoordIndex = 0;
+                    geolocate.use();
+
                 var id = setInterval(function () {
                     geolocate.change(coords[currentIndex]);
                     if (Math.abs(coords[currentIndex].lat - parseFloat(lat[check_point - 1])) < 0.007
@@ -447,11 +476,13 @@
                         }
                     };
 
+                    csv.title = "Final point";
+
                     stubGeolocation(check_point);
                     var doc = document.getElementById("viewDiv");
                     doc.addEventListener("keyup", function(event) {
                         if (event.keyCode === 32) { //when press space activate stubGeolocation
-                            //stubGeolocation(check_point);
+                            // stubGeolocation(check_point);
                         }
                     });
 
@@ -485,11 +516,21 @@
                         }),
                         useHeadingEnabled: false,
                         goToOverride: function (view, options) {
-                            options.target.scale = 50;  // Override the default map scale
+                            options.target.scale = 400;  // Override the default map scale
                             return view.goTo(options.target);
                         }
                     });
 
+                    const legend = new Expand({
+                        content: new Legend({
+                            view: view,
+                            style: "classic" // other styles include 'classic'
+                        }),
+                        view: view,
+                        expanded: true
+                    });
+
+                    view.ui.add(legend, "bottom-right");
                     view.ui.add(track, "top-left");
                     view.ui.add("titleDiv", "top-right");
 
@@ -589,7 +630,7 @@
                         track.start();
                     });
 
-                    /*TODO view.when(disableZooming);*/
+                    view.when(disableZooming);
 
                     var traffic = new MapImageLayer({
                         url: "https://traffic.arcgis.com/arcgis/rest/services/World/Traffic/MapServer"
@@ -654,35 +695,6 @@
 
                     map.add(traffic);
                     map.add(csv);
-
-                    /*TODO alert(calcCrow(latitude_p, longitude_p, latitude_b, longitude_b));*/
-                    var coords = [
-                        {
-                            //Arcul de Triumf
-                            lat: 44.47376408905791,
-                            lng: 26.077463610717633
-                        },
-                        {
-                            //Biserica Mânăstirii Stavropoleos
-                            lat: 44.43213237752685,
-                            lng: 26.09894274079316
-                        },
-                        {
-                            //Palatul Parlamentului
-                            lat: 44.427809973431046,
-                            lng: 26.08728622698437
-                        },
-                        {
-                            //Casa Ceaușescu
-                            lat: 44.47045669442872,
-                            lng: 26.09256981203704
-                        },
-                        {
-                            //Parcul Național Văcărești
-                            lat: 44.40417745810561,
-                            lng: 26.134669765003185
-                        }
-                    ];
 
                     var i;
                     for (i = 0; i < coords.length; i++) {
