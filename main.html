@@ -126,7 +126,7 @@
             xhr.send();
         }
     </script>
-    <script >
+    <script>
 
         var riddles = [];
         var indexes = [];
@@ -602,11 +602,42 @@
                     categoriesElement.addEventListener("click", filterByCategory);
                     function filterByCategory(event) {
                         selectedCategory = event.target.getAttribute("category");
+                        xhr.open("GET", "small.csv");
+                        xhr.responseType = "blob";
+
+                        //console.log(event.target.getAttribute("Longitude") + " " + event.target.getAttribute("Latitude"));
                         console.log("Category = '" + selectedCategory + "'" + "+");
-                        if (selectedCategory != 'Toate')
+                        if (selectedCategory != 'Toate') {
                             csv.definitionExpression = "Category = '" + selectedCategory + "'";
-                        else
+                            xhr.onload = function () {
+                                blob = xhr.response;
+                                var fr = new FileReader();
+                                fr.readAsText(blob);
+                                fr.onload = function () {
+                                    c = fr.result;
+
+                                    var textByLine = c.split("\n")
+                                    view.graphics.removeAll();
+                                    for (var i = 1; i < textByLine.length - 1; i++) {
+                                        var tokens = textByLine[i].split(",");
+                                        let str = tokens[6];
+                                        str = str.substring(0, str.length - 1);
+
+                                        if (str.localeCompare(selectedCategory) === 0) {
+                                            drawCircle(view, parseFloat(tokens[3]), parseFloat(tokens[2]));
+                                        }
+                                    }
+                                }
+                            }
+                            xhr.send();
+                        } else {
                             csv.definitionExpression = "Index >= '0'";
+                            view.graphics.removeAll();
+                            var i;
+                            for (i = 0; i < coords.length; i++) {
+                                drawCircle(view, parseFloat(lat[i]), parseFloat(lng[i]));
+                            }
+                        }
                     }
 
                     view.whenLayerView(csv).then(function (layerView) {
@@ -624,17 +655,39 @@
                     map.add(traffic);
                     map.add(csv);
 
-                    // Pitesti
-                    var latitude_p = 44.842849;
-                    var longitude_p = 24.8798695;
-
-                    // Bucuresti
-                    var latitude_b = 44.42551820774172;
-                    var longitude_b = 26.104573202649387
-
                     /*TODO alert(calcCrow(latitude_p, longitude_p, latitude_b, longitude_b));*/
+                    var coords = [
+                        {
+                            //Arcul de Triumf
+                            lat: 44.47376408905791,
+                            lng: 26.077463610717633
+                        },
+                        {
+                            //Biserica Mânăstirii Stavropoleos
+                            lat: 44.43213237752685,
+                            lng: 26.09894274079316
+                        },
+                        {
+                            //Palatul Parlamentului
+                            lat: 44.427809973431046,
+                            lng: 26.08728622698437
+                        },
+                        {
+                            //Casa Ceaușescu
+                            lat: 44.47045669442872,
+                            lng: 26.09256981203704
+                        },
+                        {
+                            //Parcul Național Văcărești
+                            lat: 44.40417745810561,
+                            lng: 26.134669765003185
+                        }
+                    ];
 
-                    //drawCircle(view, latitude_b, longitude_b);
+                    var i;
+                    for (i = 0; i < coords.length; i++) {
+                        drawCircle(view, parseFloat(lat[i]), parseFloat(lng[i]));
+                    }
                 });
             }
 
@@ -687,10 +740,9 @@
              * @param longitude
              */
             function drawCircle(view, latitude, longitude){ //draws the circle
-                view.graphics.removeAll();
 
                 // calculate the offset random to be sure that the point is different from circle center
-                var random_offset_1 = getRndInteger(-500, 500);
+                var random_offset_1 = getRndInteger(-100, 100);
                 var random_offset_2 = getRndInteger(-Math.abs(random_offset_1)/2, Math.abs(random_offset_1)/2);
                 var random_offset_3 = getRndInteger(-Math.abs(random_offset_2)/2, Math.abs(random_offset_2)/2);
 
@@ -704,6 +756,15 @@
                 var lat_3 = randomizeLatitude(latitude, random_offset_3);
                 var long_3 = randomizeLongitude(longitude, random_offset_3, latitude);
 
+                // console.log(lat_3 + " " + long_3);
+
+                // without randomize
+                /*var lat_1 = latitude;
+                var lat_2 = latitude;
+                var lat_3 = latitude;
+                var long_1 = longitude;
+                var long_2 = longitude;
+                var long_3 = longitude;*/
                 // create points for the circles
                 var point_1 = {
                     type: "point",
@@ -734,7 +795,7 @@
                 var circle_geometry_1 = new Circle({
                     center: point_1,
                     radiusUnit: "meters",
-                    radius: 1000,
+                    radius: 500,
                     numberOfPoints: 1000,
                     geodesic: true
                 });
@@ -742,7 +803,7 @@
                 var circle_geometry_2 = new Circle({
                     center: point_2,
                     radiusUnit: "meters",
-                    radius: 500,
+                    radius: 250,
                     numberOfPoints: 1000,
                     geodesic: true
                 });
@@ -750,7 +811,7 @@
                 var circle_geometry_3 = new Circle({
                     center: point_3,
                     radiusUnit: "meters",
-                    radius: 250,
+                    radius: 175,
                     numberOfPoints: 1000,
                     geodesic: true
                 });
